@@ -8,10 +8,17 @@ Use zustand to share state between pages and background in web extensions.
 npm install webext-zustand
 ```
 
-- Create a store based on https://github.com/pmndrs/zustand.
-- You can create a store either reactive way or vanilla.
-- Wrap the store with `wrapStore`. Import the store from the background.
-- You should await for the store to connect to the background.
+- Create a store using Zustand (https://github.com/pmndrs/zustand). You can create a store using either the reactive (`create`) or vanilla (`createStore`) approach.
+- Wrap the store with `wrapStore` from `webext-zustand`.
+  - This allows the store to be shared between the background script and other parts of the extension.
+- In the background script (`background.ts`):
+  - You must either subscribe to the store using `store.subscribe()` or wait for the `applicationStoreReadyPromise` to resolve before accessing the store.
+  - This ensures that the store is properly initialized and ready for use.
+- In the popup or content script (using ReactDOM):
+  - Import the store and the `storeReadyPromise` from the store module.
+  - Await the `storeReadyPromise` using `.then()` before rendering your React component.
+  - This ensures that the store is connected to the background and ready to be used in your component.
+
 
 That's it! Now your store is available from everywhere.
 
@@ -43,13 +50,19 @@ export default useBearStore;
 
 ```js
 import store from "./store";
-
-// listen state changes
+// IMPORTANT: In the background script, you must either subscribe to the store
+// or wait for the applicationStoreReadyPromise before accessing the store.
+// Choose one of the following options:
+// Option 1: Subscribe to the store
 store.subscribe((state) => {
   // console.log(state);
 });
-
-// dispatch
+// Option 2: Wait for the applicationStoreReadyPromise
+// applicationStoreReadyPromise.then(() => {
+//   console.log("ready");
+// });
+// After choosing one of the above options, you can safely access the store
+// and dispatch actions, for example:
 // store.getState().increase(2);
 ```
 
